@@ -5,6 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 import pandas as pd
+from args.args import Args
 
 MatcherTypes = Literal['cosine', 'euclidean', 'manhattan', 'mean']
 
@@ -98,6 +99,22 @@ class Matcher:
     self.saveSimilarityTable('similarityMean.sqlite', meanMatrix)
     return pairs
   
+  def __runInBatch(self, threshold: float, getPairsFunc: Callable[[float, np.ndarray, np.ndarray], List[Tuple[int, int, float]]]) -> List[Tuple[int, int, float]]:
+    '''Executa a função getPairsFunc em batch, dividindo a matriz de embeddings em partes menores para evitar estouro de memória.'''
+    print("Running in batch")
+    pairs = []
+    num_embeddings = len(self.embeddings)
+    batch_size = 1000
+    for i in range(0, num_embeddings, batch_size):
+      batch_embedds = self.embeddings[i:i+batch_size]
+      batch_pairs = getPairsFunc(threshold, batch_embedds, self.embeddings)
+      
+      # Ajusta os índices dos pares do batch para o índice global
+      adjusted_pairs = [(p[0] + i, p[1], p[2]) for p in batch_pairs]
+      pairs.extend(adjusted_pairs)
+      
+    return pairs
+  
   def getPairs(self, threshold: float, by: MatcherTypes='cosine') -> List[Tuple[int, int, float]]:
     '''Retorna os pares de instâncias que possuem uma similaridade maior que o threshold. os médotos dispiníveis são:
     - cosine: Similaridade de cosseno: Quanto mais próximo de 1, mais similar. Utilizado de padrão.
@@ -105,15 +122,28 @@ class Matcher:
     - manhattan: Distância de manhattan: Quanto mais próximo de 0, mais similar.
     - mean: Média das 3 métricas anteriores: Quanto mais próximo de 1, mais similar. Mais custoso computacionalmente.
     '''
-
-    if by == 'cosine':
-      return self.__getPairsCosine(threshold, self.embeddings, self.embeddings)
-    elif by == 'euclidean':
-      return self.__getPairsEuclidean(threshold, self.embeddings, self.embeddings)
-    elif by == 'manhattan':
-      return self.__getPairsManhattan(threshold, self.embeddings, self.embeddings)
-    elif by == 'mean':
-      return self.__getPairsMean(threshold, self.embeddings, self.embeddings) # avaliar remoção
+    if Args.runLowMemory:
+      match (by):
+        case 'cosine':
+          return self.__runInBatch(threshold, self.__getPairsCosine)
+        case 'euclidean':
+          return self.__runInBatch(threshold, self.__getPairsEuclidean)
+        case 'manhattan':
+          return self.__runInBatch(threshold, self.__getPairsManhattan)
+        case 'mean':
+          return self.__runInBatch(threshold, self.__getPairsMean) # avaliar remoção
+        case _:
+          raise Exception("Invalid method. Use 'cosine', 'euclidean', 'manhattan' or 'mean'.")
     else:
-      raise Exception("Invalid method. Use 'cosine', 'euclidean', 'manhattan' or 'mean'.")
+      match (by):
+        case 'cosine':
+          return self.__getPairsCosine(threshold, self.embeddings, self.embeddings)
+        case 'euclidean':
+          return self.__getPairsEuclidean(threshold, self.embeddings, self.embeddings)
+        case 'manhattan':
+          return self.__getPairsManhattan(threshold, self.embeddings, self.embeddings)
+        case 'mean':
+          return self.__getPairsMean(threshold, self.embeddings, self.embeddings) # avaliar remoção
+        case _:
+          raise Exception("Invalid method. Use 'cosine', 'euclidean', 'manhattan' or 'mean'.")
     

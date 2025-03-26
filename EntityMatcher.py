@@ -84,6 +84,8 @@ class EntityMatcher():
     self.clusterer.createGraph(self.pairs)
     print("Graph created. Creating clusters...")
     self.clusters = self.clusterer.getClusters()
+    # filtra clusters com mais de 1 elemento
+    self.clusters = [cluster for cluster in self.clusters if len(cluster) > 1]
     # Post-processing:
     # Deve realizar um dbscan para separar os clusters com transitividade
     pairs = {}
