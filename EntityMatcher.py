@@ -68,7 +68,7 @@ class EntityMatcher():
   def pipeline(self):
     print("Starting pipeline...")
     self.singleTable: Table = TableManager.createSingleTable(TableManager.openDatabase(self.path))
-    print("Single table created.")
+    print(f"Single table created with {len(self.singleTable.database)} rows.")
     self.singleTable.createTextColumn(self.columnsToText)
     print("Text column created.")
     self.embedder = Embedder(self.embedderType)
