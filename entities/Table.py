@@ -14,9 +14,10 @@ class Table():
   def createTextColumn(self, textColumns: List[str]) -> None:
     '''Cria uma coluna que representa o texto a ser utilizado para o embedding e consequentemente
     para o matching. A coluna é criada a partir da concatenação das colunas passadas como argumento.'''
-    self.__checkColumnsExist(textColumns)
-    self.database[textColumns] = self.database[textColumns].astype(str)
-    self.database[textColumns] = self.database[textColumns].replace(np.nan, '', regex=True)
+    textColumnNotWeighted = list(set(textColumns))
+    self.__checkColumnsExist(textColumnNotWeighted)
+    self.database[textColumnNotWeighted] = self.database[textColumnNotWeighted].astype(str)
+    self.database[textColumnNotWeighted] = self.database[textColumnNotWeighted].replace(np.nan, '', regex=True)
     self.database[DATABASE_TEXT_COLUMN_NAME] = self.database[textColumns].apply(lambda row: " ".join(row), axis=1)
     
   def __checkColumnsExist(self, columns: List[str]) -> None:

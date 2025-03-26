@@ -20,7 +20,7 @@ def runWithFasttext():
 def main(matcherType, embedderType):
   initTime = time.time()
   path = 'bases/Music-20'
-  entityMatcher = EntityMatcher(path, ['title','artist'], matcherType=matcherType, embedderType=embedderType)
+  entityMatcher = EntityMatcher(path, {'title': 1, 'artist': 1}, matcherType=matcherType, embedderType=embedderType)
   clusters = entityMatcher.pipeline()
   print(f"Got {len(clusters)} clusters.")
   finalTime = time.time()
@@ -44,8 +44,8 @@ if __name__ == '__main__':
   #     except Exception as e:
   #       print(f"Error while running with {embedder} embedder and {matcher} matcher")
   #       continue
-  embedder = 'fasttext'
-  matcher = 'euclidean'
+  embedder = 'glove'
+  matcher = 'cosine'
   print(f"Running with {embedder} embedder and {matcher} matcher...")
   try:
     main(matcher, embedder)

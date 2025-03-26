@@ -1,5 +1,6 @@
 import fasttext
 from gensim.models import KeyedVectors
+from sentence_transformers import SentenceTransformer
 # import nltk
 import numpy as np
 # from nltk.corpus import stopwords
@@ -7,7 +8,7 @@ from typing import *
 from args.args import Args
 
 
-EmbedderTypes = Literal['fasttext', 'glove']
+EmbedderTypes = Literal['fasttext', 'glove', 'sentence-transformers']
 
 class Embedder():
   '''Classe responsável por calcular embeddings de uma sentença. Alguns embedders são aceitos, sendo eles:
@@ -23,6 +24,9 @@ class Embedder():
         self.embedder = fasttext.load_model('models/cc.en.100.bin')
       case 'glove':
         self.embedder = KeyedVectors.load_word2vec_format("models/bin/glove.6B.300d.bin", binary=True)
+      case 'sentence-transformers':
+        self.embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
+      
   
   def __preprocessSentence(self, sentence: str, removeStopwords) -> str:
     '''Remove stopwords, caracteres da sentença e deixa tudo em minúsculo.'''
@@ -52,7 +56,13 @@ class Embedder():
         return self.__getEmbeddingsFasttext(sentence)
       case 'glove':
         return self.__getEmbeddingsGlove(sentence)
-        
+      case 'sentence-transformers':
+        return self.__getEmbeddingsSentenceTransformers(sentence)
+
+  def __getEmbeddingsSentenceTransformers(self, sentence) -> np.ndarray:
+    '''Retorna os embeddings de uma sentença utilizando o modelo de Sentence-Transformers all-MiniLM-L12-v2. Mais robusto e com melhores resultados, mas mais lento.'''
+    return self.embedder.encode(sentence)
+
   def __getEmbeddingsGlove(self, sentence) -> List[np.ndarray]:
     '''Retorna os embeddings de uma sentença utilizando o modelo Glove. Se uma palavra não estiver no vocabulário, ela é ignorada.'''
     words = sentence.split()

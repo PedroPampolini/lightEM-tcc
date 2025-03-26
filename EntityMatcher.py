@@ -7,14 +7,16 @@ from entities.Matcher import *
 from entities.Clusterer import *
 
 class EntityMatcher():
-  def __init__(self, path: str, columnsToText: List[str], embedderType: EmbedderTypes='glove', matcherType: MatcherTypes='cosine', threshold: float=0.9, removeStopwords: bool=False):
+  def __init__(self, path: str, columnsToText: Dict[str, int], embedderType: EmbedderTypes='glove', matcherType: MatcherTypes='cosine', threshold: float=0.9, removeStopwords: bool=False):
     self.path = path
     self.embedderType = embedderType
     self.matcherType = matcherType
     self.threshold = threshold
     self.removeStopwords = removeStopwords
-    self.columnsToText = columnsToText
-    
+    self.columnsToText = []
+    for column in columnsToText:
+      self.columnsToText.extend([column] * columnsToText[column])
+      
     self.k_neighbors = None
     self.seed = None
     self.metric = None
