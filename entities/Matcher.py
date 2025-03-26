@@ -50,37 +50,37 @@ class Matcher:
     conn.commit()
     conn.close()
     
-  def __getPairsCosine(self, threshold: float) -> List[Tuple[int, int, float]]:
+  def __getPairsCosine(self, threshold: float, embedds1: np.ndarray, embedds2: np.ndarray) -> List[Tuple[int, int, float]]:
     '''Calcula a similaridade de cosseno e retorna os pares que possuem uma similaridade maior ou igual ao threshold'''
-    similarityMatrix = cosine_similarity(self.embeddings)
+    similarityMatrix = cosine_similarity(embedds1, embedds2)
     pairs = np.argwhere(similarityMatrix >= threshold)
     # self.saveSimilarityTable('similarityCosine.sqlite', similarityMatrix)
     # salva com a similaridade
     pairs = [(p[0], p[1], similarityMatrix[p[0], p[1]]) for p in pairs if p[0] != p[1]]
     return pairs
   
-  def __getPairsEuclidean(self, threshold: float) -> List[Tuple[int, int, float]]:
+  def __getPairsEuclidean(self, threshold: float, embedds1: np.ndarray, embedds2: np.ndarray) -> List[Tuple[int, int, float]]:
     '''Calcula a distância euclidiana e retorna os pares que possuem uma distância menor ou igual ao threshold'''
-    distanceMatrix = euclidean_distances(self.embeddings)
+    distanceMatrix = euclidean_distances(embedds1, embedds2)
     pairs = np.argwhere(distanceMatrix <= threshold)
     pairs = [(p[0], p[1], distanceMatrix[p[0], p[1]]) for p in pairs if p[0] != p[1]]
     self.saveSimilarityTable('similarityEuclidean.sqlite', distanceMatrix)
     return pairs
   
-  def __getPairsManhattan(self, threshold: float) -> List[Tuple[int, int, float]]:
+  def __getPairsManhattan(self, threshold: float, embedds1: np.ndarray, embedds2: np.ndarray) -> List[Tuple[int, int, float]]:
     '''Calcula a distância de manhattan e retorna os pares que possuem uma distância menor ou igual ao threshold'''
-    distanceMatrix = manhattan_distances(self.embeddings)
+    distanceMatrix = manhattan_distances(embedds1, embedds2)
     pairs = np.argwhere(distanceMatrix <= threshold)
     pairs = [(p[0], p[1], distanceMatrix[p[0], p[1]]) for p in pairs if p[0] != p[1]]
     self.saveSimilarityTable('similarityManhattan.sqlite', distanceMatrix)
     return pairs
   
-  def __getPairsMean(self, threshold: float) -> List[Tuple[int, int, float]]:
+  def __getPairsMean(self, threshold: float, embedds1: np.ndarray, embedds2: np.ndarray) -> List[Tuple[int, int, float]]:
     '''Calcula a média das distâncias e similaridades e retorna os pares que possuem uma similaridade maior ou igual ao threshold.
     Método mais custoso computacionalmente, por precisar de 3 matrizes e realizar a normalização de cada uma.'''
-    cosineMatrix = cosine_similarity(self.embeddings)
-    euclideanMatrix = euclidean_distances(self.embeddings)
-    manhattanMatrix = manhattan_distances(self.embeddings)
+    cosineMatrix = cosine_similarity(embedds1, embedds2)
+    euclideanMatrix = euclidean_distances(embedds1, embedds2)
+    manhattanMatrix = manhattan_distances(embedds1, embedds2)
     
     euclideanMatrix = 1 / (1 + euclideanMatrix)
     manhattanMatrix = 1 / (1 + manhattanMatrix)
@@ -107,13 +107,13 @@ class Matcher:
     '''
 
     if by == 'cosine':
-      return self.__getPairsCosine(threshold)
+      return self.__getPairsCosine(threshold, self.embeddings, self.embeddings)
     elif by == 'euclidean':
-      return self.__getPairsEuclidean(threshold)
+      return self.__getPairsEuclidean(threshold, self.embeddings, self.embeddings)
     elif by == 'manhattan':
-      return self.__getPairsManhattan(threshold)
+      return self.__getPairsManhattan(threshold, self.embeddings, self.embeddings)
     elif by == 'mean':
-      return self.__getPairsMean(threshold) # avaliar remoção
+      return self.__getPairsMean(threshold, self.embeddings, self.embeddings) # avaliar remoção
     else:
       raise Exception("Invalid method. Use 'cosine', 'euclidean', 'manhattan' or 'mean'.")
     
